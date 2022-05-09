@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+set -eu
+
+case "$1" in
+    GET)
+        case "$2" in
+            hello)
+                if [ -v QUERY_NAME ]; then
+                    echo "Hello, $QUERY_NAME"
+                else
+                    echo "Hello, world"
+                fi
+                exit 0
+            ;;
+        esac
+    ;;
+esac
+
+echo "Not found"
+exit 404

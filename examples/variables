@@ -1,0 +1,15 @@
+#! /usr/bin/env bash
+
+env | sort
+
+echo "Params:"
+for param in "$@"; do
+    echo "'$param'"
+done
+
+echo $REQUEST_METHOD
+
+echo Param number $#
+
+echo $HEADER_ACCEPT
+echo ${HEADER_ACCEPT[0]}
