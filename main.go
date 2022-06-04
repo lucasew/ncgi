@@ -100,7 +100,7 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         fmt.Fprint(w, err.Error())
         return
     }
-    buf := make([]byte, 1024)
+    buf := make([]byte, 64*1024)
     for {
         select {
         case <-ctx.Done():
@@ -108,7 +108,7 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         default:
             sz, err := stdout.Read(buf)
             if err == io.EOF {
-                break
+                return
             }
             log.Printf("sz=%d", sz)
             if err != nil {
@@ -125,17 +125,5 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
             }
             time.Sleep(100*time.Millisecond)
         }
-    }
-    state, err := cmd.Process.Wait()
-    if err != nil {
-        // w.WriteHeader(500)
-        fmt.Fprint(w, err.Error())
-        return
-    }
-    code := state.ExitCode()
-    if code == 0 {
-        // w.WriteHeader(200)
-    } else {
-        // w.WriteHeader(code)
     }
 }
