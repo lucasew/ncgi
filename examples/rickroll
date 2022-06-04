@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+# it seems that the youtube backend is broken atm, if not broken this thing should work
+# youtube-dl -o - "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+youtube-dl -o - "https://soundcloud.com/rick-astley-official/never-gonna-give-you-up-4"
