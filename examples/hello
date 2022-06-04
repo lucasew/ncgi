@@ -2,9 +2,9 @@
 
 set -eu
 
-case "$1" in
+case "$REQUEST_METHOD" in
     GET)
-        case "$2" in
+        case "$1" in
             hello)
                 if [ -v QUERY_NAME ]; then
                     echo "Hello, $QUERY_NAME"

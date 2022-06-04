@@ -1,14 +1,18 @@
 package main
-import "github.com/davecgh/go-spew/spew"
+
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
+
+	"github.com/davecgh/go-spew/spew"
 )
 
 func init() {
@@ -43,10 +47,11 @@ func NewCGIHandler(script string) http.Handler {
 
 
 func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+    ctx := r.Context()
     cmd := exec.Cmd{}
     cmd.Path = c.script
     cmd.Args = []string{c.script}
-    cmd.Args = append(cmd.Args, strings.ToUpper(r.Method))
+    // cmd.Args = append(cmd.Args, strings.ToUpper(r.Method))
     toadd := strings.Split(r.URL.Path, "/")
     if r.URL.Path == "/" {
         toadd = []string{}
@@ -78,15 +83,48 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
         ))
     }
     cmd.Stdin = r.Body
-    cmd.Stdout = w
+    stdout, err := cmd.StdoutPipe()
+    defer stdout.Close()
+    defer func () {
+        if cmd.Process != nil {
+            cmd.Process.Kill()
+        }
+    }()
+    // cmd.Stdout = w
     cmd.Stderr = os.Stderr
-    err := cmd.Start()
+    err = cmd.Start()
     if err != nil {
         log.Println(err.Error())
 
         // w.WriteHeader(500)
         fmt.Fprint(w, err.Error())
         return
+    }
+    buf := make([]byte, 1024)
+    for {
+        select {
+        case <-ctx.Done():
+            return
+        default:
+            sz, err := stdout.Read(buf)
+            if err == io.EOF {
+                break
+            }
+            log.Printf("sz=%d", sz)
+            if err != nil {
+                fmt.Fprint(w, err.Error())
+                return
+            }
+            _, err = w.Write(buf[:sz])
+            if err != nil {
+                fmt.Fprint(w, err.Error())
+                return
+            }
+            if f, ok := w.(http.Flusher); ok { 
+                f.Flush()
+            }
+            time.Sleep(100*time.Millisecond)
+        }
     }
     state, err := cmd.Process.Wait()
     if err != nil {

@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+file="$1"; shift
+
+exepath="$(dirname "$(realpath "$0")")/$file"
+if [ -x "$exepath" ]; then
+    . "$exepath"
+else
+    echo "'$exepath' is not a executable file"
+fi
