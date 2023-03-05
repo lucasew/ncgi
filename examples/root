@@ -2,9 +2,18 @@
 
 file="$1"; shift
 
-exepath="$(dirname "$(realpath "$0")")/$file"
-if [ -x "$exepath" ]; then
-    . "$exepath"
+fullfile="$(dirname "$(realpath "$0")")/$file"
+if [ -d "$fullfile" ]; then
+    if [ -f "$fullfile/index.html" ]; then
+        cat "$fullfile/index.html"
+    else
+        ls -1 "$fullfile" | while read line; do
+            echo '<a href="$file">$file</a><br>'
+        done
+    fi
+elif [ -x "$fullfile" ]; then
+    . "$fullfile"
 else
-    echo "'$exepath' is not a executable file"
+    cat "$fullfile"
+    # echo "'$exepath' is not a executable file"
 fi
