@@ -65,11 +65,7 @@ func handleSubprocess(ctx context.Context, args ...string) error {
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
 	time.Sleep(1*time.Second)
-	err = cmd.Start()
-	if err != nil {
-		return err
-	}
-	return cmd.Wait()
+	return cmd.Run()
 }
 
 type CGIHandler struct {
