@@ -2,6 +2,8 @@
 
 file="$1"; shift
 
+echo "$REQUEST_METHOD '$REQUEST_URI' from '$REMOTE_ADDR'" >&2
+
 fullfile="$(dirname "$(realpath "$0")")/$file"
 if [ -d "$fullfile" ]; then
     if [ -f "$fullfile/index.html" ]; then
