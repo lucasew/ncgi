@@ -2,7 +2,7 @@
 go = "1.23.0"
 golangci-lint = "1.61.0"
 actionlint = "1.7.1"
-python = "3.12.9"
+python = "3.14.3"
 ruff = "0.9.9"
 
 [tasks.install]
