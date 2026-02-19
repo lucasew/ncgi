@@ -33,6 +33,7 @@ jobs:
           body: "This PR updates generated code."
           branch: "chore/codegen"
           delete-branch: true
+          base: ${{ github.head_ref || github.ref_name }}
       - run: mise run ci
       - name: Release
         if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'

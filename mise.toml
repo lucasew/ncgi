@@ -3,6 +3,7 @@ go = "1.23.0"
 golangci-lint = "1.61.0"
 actionlint = "1.7.1"
 python = "3.12.9"
+ruff = "0.9.9"
 
 [tasks.install]
 description = "Install dependencies"
@@ -15,6 +16,10 @@ run = "golangci-lint run"
 [tasks."lint:actionlint"]
 description = "Run actionlint"
 run = "actionlint"
+
+[tasks."lint:ruff"]
+description = "Run ruff"
+run = "ruff check"
 
 [tasks.lint]
 description = "Run all linters"
