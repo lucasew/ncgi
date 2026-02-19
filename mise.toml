@@ -1,10 +1,9 @@
 [tools]
 go = "1.23.1"
 golangci-lint = "1.61.0"
-node = "20.17.0"
 
 [tasks."lint:go"]
-run = "golangci-lint run"
+run = "golangci-lint run --timeout=5m"
 
 [tasks.lint]
 depends = ["lint:*"]
