@@ -4,7 +4,6 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"time"
 	"io"
 	"log"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/phayes/freeport"
@@ -37,12 +37,22 @@ func main() {
 	}
 	log.Printf("Listening on port %d...", port)
 	server := &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: NewCGIHandler(script)}
-	defer server.Shutdown(ctx)
-	go server.ListenAndServe()
+	defer func() {
+		err := server.Shutdown(ctx)
+		if err != nil {
+			ReportError(err, nil)
+		}
+	}()
+	go func() {
+		err := server.ListenAndServe()
+		if err != nil && err != http.ErrServerClosed {
+			ReportFatal(err, nil)
+		}
+	}()
 
 	err := handleSubprocess(ctx, flag.Args()...)
 	if err != nil {
-		panic(err)
+		ReportFatal(err, nil)
 	}
 }
 
@@ -50,7 +60,7 @@ func handleSubprocess(ctx context.Context, args ...string) error {
 	var err error
 	if len(args) == 0 {
 		for {
-			time.Sleep(1*time.Second)
+			time.Sleep(1 * time.Second)
 		}
 	}
 	args[0], err = exec.LookPath(args[0])
@@ -64,7 +74,7 @@ func handleSubprocess(ctx context.Context, args ...string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	cmd.Stdin = os.Stdin
-	time.Sleep(1*time.Second)
+	time.Sleep(1 * time.Second)
 	return cmd.Run()
 }
 
@@ -75,11 +85,11 @@ type CGIHandler struct {
 func NewCGIHandler(script string) http.Handler {
 	p, err := exec.LookPath(script)
 	if err != nil {
-		panic(err)
+		ReportFatal(err, map[string]interface{}{"script": script})
 	}
 	p, err = filepath.Abs(p)
 	if err != nil {
-		panic(err)
+		ReportFatal(err, map[string]interface{}{"path": p})
 	}
 	log.Printf("Initializing CGI handler on folder '%s'...", p)
 	return CGIHandler{p}
@@ -100,9 +110,7 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	cmd.Args = append(cmd.Args, toadd...)
 	cmd.Env = make([]string, 0, len(r.Header)+6+len(os.Environ()))
-	for _, env := range os.Environ() {
-		cmd.Env = append(cmd.Env, env)
-	}
+	cmd.Env = append(cmd.Env, os.Environ()...)
 	cmd.Env = append(cmd.Env, fmt.Sprintf("REMOTE_ADDR=%s", r.RemoteAddr))
 	cmd.Env = append(cmd.Env, fmt.Sprintf("REQUEST_METHOD=%s", strings.ToUpper(r.Method)))
 	cmd.Env = append(cmd.Env, fmt.Sprintf("REQUEST_URI=%s", r.RequestURI))
@@ -122,17 +130,25 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	cmd.Stdin = r.Body
 	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		ReportError(err, nil)
+		fmt.Fprint(w, err.Error())
+		return
+	}
 	defer stdout.Close()
 	defer func() {
 		if cmd.Process != nil {
-			cmd.Process.Kill()
+			err := cmd.Process.Kill()
+			if err != nil {
+				ReportError(err, nil)
+			}
 		}
 	}()
 	// cmd.Stdout = w
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
 	if err != nil {
-		log.Println(err.Error())
+		ReportError(err, map[string]interface{}{"script": c.script})
 
 		// w.WriteHeader(500)
 		fmt.Fprint(w, err.Error())
@@ -149,11 +165,13 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			if err != nil {
+				ReportError(err, nil)
 				fmt.Fprint(w, err.Error())
 				return
 			}
 			_, err = w.Write(buf[:sz])
 			if err != nil {
+				ReportError(err, nil)
 				fmt.Fprint(w, err.Error())
 				return
 			}
