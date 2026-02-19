@@ -16,7 +16,7 @@ jobs:
   autorelease:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
       - uses: cachix/install-nix-action@v31
@@ -40,4 +40,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create v$(date +%Y%m%d%H%M%S) --generate-notes
+          gh release create "v$(date +%Y%m%d%H%M%S)" --generate-notes
