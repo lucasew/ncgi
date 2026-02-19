@@ -1,0 +1,53 @@
+[tools]
+go = "1.23.0"
+golangci-lint = "1.61.0"
+actionlint = "1.7.1"
+python = "3.12.9"
+ruff = "0.9.9"
+
+[tasks.install]
+description = "Install dependencies"
+run = "go mod download"
+
+[tasks."lint:golangci-lint"]
+description = "Run golangci-lint"
+run = "golangci-lint run"
+
+[tasks."lint:actionlint"]
+description = "Run actionlint"
+run = "actionlint"
+
+[tasks."lint:ruff"]
+description = "Run ruff"
+run = "ruff check"
+
+[tasks.lint]
+description = "Run all linters"
+depends = ["lint:*"]
+
+[tasks."fmt:go"]
+description = "Format Go code"
+run = "gofmt -w ."
+
+[tasks.fmt]
+description = "Run all formatters"
+depends = ["fmt:*"]
+
+[tasks.test]
+description = "Run tests"
+run = "go test ./..."
+
+[tasks.codegen]
+description = "Generate code"
+run = """
+go generate ./...
+if command -v nix-build >/dev/null 2>&1; then
+    python3 .github/update-nix-hashes.py
+else
+    echo "nix-build not found, skipping hash update"
+fi
+"""
+
+[tasks.ci]
+description = "Run CI pipeline"
+depends = ["lint", "test"]
