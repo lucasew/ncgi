@@ -37,8 +37,16 @@ func main() {
 	}
 	log.Printf("Listening on port %d...", port)
 	server := &http.Server{Addr: fmt.Sprintf(":%d", port), Handler: NewCGIHandler(script)}
-	defer server.Shutdown(ctx)
-	go server.ListenAndServe()
+	defer func() {
+		if err := server.Shutdown(ctx); err != nil {
+			reportError(err)
+		}
+	}()
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			reportError(err)
+		}
+	}()
 
 	err := handleSubprocess(ctx, flag.Args()...)
 	if err != nil {
@@ -72,6 +80,12 @@ type CGIHandler struct {
 	script string
 }
 
+func reportError(err error) {
+	if err != nil {
+		log.Printf("Error: %v", err)
+	}
+}
+
 func NewCGIHandler(script string) http.Handler {
 	p, err := exec.LookPath(script)
 	if err != nil {
@@ -100,9 +114,7 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	cmd.Args = append(cmd.Args, toadd...)
 	cmd.Env = make([]string, 0, len(r.Header)+6+len(os.Environ()))
-	for _, env := range os.Environ() {
-		cmd.Env = append(cmd.Env, env)
-	}
+	cmd.Env = append(cmd.Env, os.Environ()...)
 	cmd.Env = append(cmd.Env, fmt.Sprintf("REMOTE_ADDR=%s", r.RemoteAddr))
 	cmd.Env = append(cmd.Env, fmt.Sprintf("REQUEST_METHOD=%s", strings.ToUpper(r.Method)))
 	cmd.Env = append(cmd.Env, fmt.Sprintf("REQUEST_URI=%s", r.RequestURI))
@@ -122,10 +134,20 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	}
 	cmd.Stdin = r.Body
 	stdout, err := cmd.StdoutPipe()
-	defer stdout.Close()
+	if err != nil {
+		reportError(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	defer func() {
+		_ = stdout.Close()
+	}()
 	defer func() {
 		if cmd.Process != nil {
-			cmd.Process.Kill()
+			if err := cmd.Process.Kill(); err != nil {
+				// We don't really care if the process is already dead
+				reportError(err)
+			}
 		}
 	}()
 	// cmd.Stdout = w

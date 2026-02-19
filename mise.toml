@@ -1,0 +1,40 @@
+[tools]
+go = "1.23.1"
+golangci-lint = "1.61.0"
+node = "20.17.0"
+
+[tasks."lint:go"]
+run = "golangci-lint run"
+
+[tasks.lint]
+depends = ["lint:*"]
+
+[tasks."fmt:go"]
+run = "go fmt ./..."
+
+[tasks.fmt]
+depends = ["fmt:*"]
+
+[tasks."test:go"]
+run = "go test -v ./..."
+
+[tasks.test]
+depends = ["test:*"]
+
+[tasks."codegen:go"]
+run = "go generate ./..."
+
+[tasks.codegen]
+depends = ["codegen:*"]
+
+[tasks."install:go"]
+run = "go mod download"
+
+[tasks.install]
+depends = ["install:*"]
+
+[tasks.build]
+run = "go build -o ncgi ."
+
+[tasks.ci]
+depends = ["lint", "test"]
