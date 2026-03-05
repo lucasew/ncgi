@@ -56,11 +56,13 @@ func main() {
 	}
 }
 
-// handleSubprocess executes a long-running subprocess alongside the CGI server.
-// It acts as a sidecar to the main server, substituting "%PORT%" with the actual
-// listening port in the arguments. If no arguments are provided, it simply blocks
-// until the context is canceled. This is useful for running a companion process
-// that needs to know which port the CGI server is bound to (e.g. for proxying).
+/**
+ * handleSubprocess executes a long-running subprocess alongside the CGI server.
+ * It acts as a sidecar to the main server, substituting "%PORT%" with the actual
+ * listening port in the arguments. If no arguments are provided, it simply blocks
+ * until the context is canceled. This is useful for running a companion process
+ * that needs to know which port the CGI server is bound to (e.g. for proxying).
+ */
 func handleSubprocess(ctx context.Context, args ...string) error {
 	var err error
 	if len(args) == 0 {
@@ -83,16 +85,20 @@ func handleSubprocess(ctx context.Context, args ...string) error {
 	return cmd.Run()
 }
 
-// CGIHandler acts as an http.Handler that translates HTTP requests into CGI environment
-// variables and executes the configured script. It maps headers, query parameters,
-// and request bodies to the standard CGI 1.1 specification.
+/**
+ * CGIHandler acts as an http.Handler that translates HTTP requests into CGI environment
+ * variables and executes the configured script. It maps headers, query parameters,
+ * and request bodies to the standard CGI 1.1 specification.
+ */
 type CGIHandler struct {
 	script string
 }
 
-// NewCGIHandler initializes a CGI handler by resolving the absolute path of the
-// target CGI script. It fatals out if the script path cannot be resolved, ensuring
-// the server only starts with a valid script.
+/**
+ * NewCGIHandler initializes a CGI handler by resolving the absolute path of the
+ * target CGI script. It fatals out if the script path cannot be resolved, ensuring
+ * the server only starts with a valid script.
+ */
 func NewCGIHandler(script string) http.Handler {
 	p, err := exec.LookPath(script)
 	if err != nil {
@@ -106,11 +112,13 @@ func NewCGIHandler(script string) http.Handler {
 	return CGIHandler{p}
 }
 
-// ServeHTTP implements the http.Handler interface. It maps the incoming HTTP request
-// to the execution environment of the CGI script.
-// It maps HTTP headers to "HEADER_*" env vars, query parameters, handles the request
-// body by piping it to the process's stdin, and streams the process's stdout back
-// to the HTTP client. It ensures the process is killed if the HTTP connection drops.
+/**
+ * ServeHTTP implements the http.Handler interface. It maps the incoming HTTP request
+ * to the execution environment of the CGI script.
+ * It maps HTTP headers to "HEADER_*" env vars, query parameters, handles the request
+ * body by piping it to the process's stdin, and streams the process's stdout back
+ * to the HTTP client. It ensures the process is killed if the HTTP connection drops.
+ */
 func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	cmd := exec.Cmd{}

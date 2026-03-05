@@ -4,7 +4,9 @@ import (
 	"log"
 )
 
-// ReportError logs the error with metadata.
+/**
+ * ReportError logs the error with metadata.
+ */
 func ReportError(err error, metadata map[string]interface{}) {
 	if err == nil {
 		return
@@ -17,7 +19,9 @@ func ReportError(err error, metadata map[string]interface{}) {
 	}
 }
 
-// ReportFatal logs the error and exits.
+/**
+ * ReportFatal logs the error and exits.
+ */
 func ReportFatal(err error, metadata map[string]interface{}) {
 	if err != nil {
 		ReportError(err, metadata)
