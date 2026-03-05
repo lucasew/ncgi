@@ -158,7 +158,12 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprint(w, err.Error())
 		return
 	}
-	defer stdout.Close()
+	defer func() {
+		err := stdout.Close()
+		if err != nil {
+			ReportError(err, nil)
+		}
+	}()
 	defer func() {
 		if cmd.Process != nil {
 			err := cmd.Process.Kill()
