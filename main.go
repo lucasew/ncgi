@@ -116,7 +116,6 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cmd := exec.Cmd{}
 	cmd.Path = c.script
 	cmd.Args = []string{c.script}
-	// cmd.Args = append(cmd.Args, strings.ToUpper(r.Method))
 	toadd := strings.Split(r.URL.Path, "/")
 	if r.URL.Path == "/" {
 		toadd = []string{}
@@ -160,13 +159,11 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}()
-	// cmd.Stdout = w
 	cmd.Stderr = os.Stderr
 	err = cmd.Start()
 	if err != nil {
 		ReportError(err, map[string]interface{}{"script": c.script})
 
-		// w.WriteHeader(500)
 		fmt.Fprint(w, err.Error())
 		return
 	}
