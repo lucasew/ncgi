@@ -113,7 +113,10 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	for _, arg := range toadd {
 		if strings.HasPrefix(arg, "-") {
 			w.WriteHeader(http.StatusBadRequest)
-			fmt.Fprint(w, "Invalid argument: arguments cannot start with a dash (-)")
+			_, err := fmt.Fprint(w, "Invalid argument: arguments cannot start with a dash (-)")
+			if err != nil {
+				ReportError(err, nil)
+			}
 			return
 		}
 	}
@@ -143,10 +146,18 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		ReportError(err, nil)
-		fmt.Fprint(w, err.Error())
+		_, printErr := fmt.Fprint(w, err.Error())
+		if printErr != nil {
+			ReportError(printErr, nil)
+		}
 		return
 	}
-	defer stdout.Close()
+	defer func() {
+		closeErr := stdout.Close()
+		if closeErr != nil {
+			ReportError(closeErr, nil)
+		}
+	}()
 	defer func() {
 		if cmd.Process != nil {
 			err := cmd.Process.Kill()
@@ -162,7 +173,10 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ReportError(err, map[string]interface{}{"script": c.script})
 
 		// w.WriteHeader(500)
-		fmt.Fprint(w, err.Error())
+		_, printErr := fmt.Fprint(w, err.Error())
+		if printErr != nil {
+			ReportError(printErr, nil)
+		}
 		return
 	}
 	buf := make([]byte, bufsize)
@@ -177,13 +191,19 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			if err != nil {
 				ReportError(err, nil)
-				fmt.Fprint(w, err.Error())
+				_, printErr := fmt.Fprint(w, err.Error())
+				if printErr != nil {
+					ReportError(printErr, nil)
+				}
 				return
 			}
 			_, err = w.Write(buf[:sz])
 			if err != nil {
 				ReportError(err, nil)
-				fmt.Fprint(w, err.Error())
+				_, printErr := fmt.Fprint(w, err.Error())
+				if printErr != nil {
+					ReportError(printErr, nil)
+				}
 				return
 			}
 			if f, ok := w.(http.Flusher); ok {
