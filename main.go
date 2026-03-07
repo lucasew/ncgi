@@ -32,7 +32,7 @@ func NewServer(port int, handler http.Handler) *Server {
 	}
 }
 
-func (s *Server) Start(ctx context.Context) {
+func (s *Server) Start() {
 	go func() {
 		if err := s.httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			ReportFatal(err, nil)
@@ -67,7 +67,7 @@ func main() {
 	handler := NewCGIHandler(script, bufsize)
 	srv := NewServer(port, handler)
 
-	srv.Start(ctx)
+	srv.Start()
 	defer srv.Stop(ctx)
 
 	if err := handleSubprocess(ctx, port, flag.Args()...); err != nil {
