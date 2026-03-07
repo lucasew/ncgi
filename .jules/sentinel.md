@@ -1,0 +1,1 @@
+- 2026-03-07: [Argument Injection] Be cautious when appending unsanitized URL path segments to command arguments; use environment variables like PATH_INFO for passing request data to executables.

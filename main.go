@@ -101,19 +101,12 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cmd.Path = c.script
 	cmd.Args = []string{c.script}
 	// cmd.Args = append(cmd.Args, strings.ToUpper(r.Method))
-	toadd := strings.Split(r.URL.Path, "/")
-	if r.URL.Path == "/" {
-		toadd = []string{}
-	}
-	if len(toadd) >= 1 && len(toadd[0]) == 0 {
-		toadd = toadd[1:]
-	}
-	cmd.Args = append(cmd.Args, toadd...)
-	cmd.Env = make([]string, 0, len(r.Header)+6+len(os.Environ()))
+	cmd.Env = make([]string, 0, len(r.Header)+7+len(os.Environ()))
 	cmd.Env = append(cmd.Env, os.Environ()...)
 	cmd.Env = append(cmd.Env, fmt.Sprintf("REMOTE_ADDR=%s", r.RemoteAddr))
 	cmd.Env = append(cmd.Env, fmt.Sprintf("REQUEST_METHOD=%s", strings.ToUpper(r.Method)))
 	cmd.Env = append(cmd.Env, fmt.Sprintf("REQUEST_URI=%s", r.RequestURI))
+	cmd.Env = append(cmd.Env, fmt.Sprintf("PATH_INFO=%s", r.URL.Path))
 	cmd.Env = append(cmd.Env, fmt.Sprintf("SERVER_PROTOCOL=%s", r.Proto))
 	cmd.Env = append(cmd.Env, "SERVER_SOFTWARE=ncgi v0.1")
 	cmd.Env = append(cmd.Env, fmt.Sprintf("SCRIPT_FILENAME=%s", c.script))
