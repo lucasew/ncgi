@@ -101,6 +101,24 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	cmd.Path = c.script
 	cmd.Args = []string{c.script}
 	// cmd.Args = append(cmd.Args, strings.ToUpper(r.Method))
+	toadd := strings.Split(r.URL.Path, "/")
+	if r.URL.Path == "/" {
+		toadd = []string{}
+	}
+	if len(toadd) >= 1 && len(toadd[0]) == 0 {
+		toadd = toadd[1:]
+	}
+
+	// Sanitize arguments to prevent Argument/Flag Injection
+	for _, arg := range toadd {
+		if strings.HasPrefix(arg, "-") {
+			w.WriteHeader(http.StatusBadRequest)
+			fmt.Fprint(w, "Invalid argument: arguments cannot start with a dash (-)")
+			return
+		}
+	}
+	cmd.Args = append(cmd.Args, toadd...)
+
 	cmd.Env = make([]string, 0, len(r.Header)+7+len(os.Environ()))
 	cmd.Env = append(cmd.Env, os.Environ()...)
 	cmd.Env = append(cmd.Env, fmt.Sprintf("REMOTE_ADDR=%s", r.RemoteAddr))
