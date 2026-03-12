@@ -21,9 +21,19 @@ func init() {
 	_ = spew.Config
 }
 
-var bufsize int
-var script string
-var port int
+var (
+	// bufsize dictates the chunk size (default 64KB) for streaming stdout
+	// from the executed CGI scripts back to the HTTP response.
+	bufsize int
+
+	// script points to the path of the executable/file that the HTTP server
+	// will trigger as its backend handler for incoming requests.
+	script string
+
+	// port defines the listening port for the HTTP server. A value of 0 signals
+	// the OS to automatically assign a free port, avoiding collisions.
+	port int
+)
 
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
@@ -56,6 +66,14 @@ func main() {
 	}
 }
 
+// handleSubprocess manages the lifecycle of external commands passed to ncgi.
+// It serves two crucial non-obvious roles:
+//  1. If no command is provided, it acts as an infinite blocking loop to keep
+//     the application alive, as the main server runs in a background goroutine.
+//  2. If a command is provided, it replaces the special token "%PORT%" with
+//     the dynamically allocated server port, allowing backend workers to know
+//     where to connect. It redirects standard I/O to link the process directly
+//     to the user's terminal.
 func handleSubprocess(ctx context.Context, args ...string) error {
 	var err error
 	if len(args) == 0 {
