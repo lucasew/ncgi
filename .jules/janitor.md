@@ -1,0 +1,1 @@
+- 2024-03-24: Always handle return values from io functions like fmt.Fprint and Close() and pass errors to centralized logging.
