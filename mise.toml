@@ -15,13 +15,7 @@ run = "golangci-lint run"
 
 [tasks."lint:actionlint"]
 description = "Run actionlint"
-run = """
-if ls .github/workflows/*.yml >/dev/null 2>&1 || ls .github/workflows/*.yaml >/dev/null 2>&1; then
-    actionlint
-else
-    echo "No workflow files found, skipping actionlint"
-fi
-"""
+run = "actionlint"
 
 [tasks."lint:ruff"]
 description = "Run ruff"
