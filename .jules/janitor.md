@@ -1,0 +1,1 @@
+- 2024-03-18: Gracefully skip actionlint in mise tasks when GitHub workflows are absent using shell conditionals, and explicitly handle fmt.Fprint return values.

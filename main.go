@@ -132,7 +132,7 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
 		ReportError(err, nil)
-		fmt.Fprint(w, err.Error())
+		_, _ = fmt.Fprint(w, err.Error())
 		return
 	}
 	defer stdout.Close()
@@ -151,7 +151,7 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ReportError(err, map[string]interface{}{"script": c.script})
 
 		// w.WriteHeader(500)
-		fmt.Fprint(w, err.Error())
+		_, _ = fmt.Fprint(w, err.Error())
 		return
 	}
 	buf := make([]byte, bufsize)
@@ -166,13 +166,13 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}
 			if err != nil {
 				ReportError(err, nil)
-				fmt.Fprint(w, err.Error())
+				_, _ = fmt.Fprint(w, err.Error())
 				return
 			}
 			_, err = w.Write(buf[:sz])
 			if err != nil {
 				ReportError(err, nil)
-				fmt.Fprint(w, err.Error())
+				_, _ = fmt.Fprint(w, err.Error())
 				return
 			}
 			if f, ok := w.(http.Flusher); ok {
