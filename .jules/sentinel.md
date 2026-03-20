@@ -1,0 +1,1 @@
+- 2026-03-20: [Missing cmd.Wait() after cmd.Start() leading to zombie process DoS, look for Start() calls without corresponding Wait() calls]

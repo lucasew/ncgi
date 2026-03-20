@@ -142,6 +142,10 @@ func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			if err != nil {
 				ReportError(err, nil)
 			}
+			err = cmd.Wait()
+			if err != nil {
+				ReportError(err, nil)
+			}
 		}
 	}()
 	// cmd.Stdout = w
