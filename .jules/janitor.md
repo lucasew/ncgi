@@ -1,0 +1,1 @@
+- 2025-03-20: Unformatted code, including trailing whitespaces, will cause the `ciborg` CI check suite to fail silently with a generic 'Build failed' error. Ensure `gofmt` is run.
