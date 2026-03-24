@@ -25,6 +25,10 @@ var bufsize int
 var script string
 var port int
 
+// main is the entry point of the ncgi application.
+// It initializes the command-line flags, sets up the HTTP server to listen on the specified (or randomly allocated) port,
+// binds the server to the CGI handler, and simultaneously starts the optional external subprocess.
+// It uses a context to manage graceful shutdown of both the server and the subprocess.
 func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -56,6 +60,10 @@ func main() {
 	}
 }
 
+// handleSubprocess manages an external command executing alongside the CGI handler.
+// It dynamically replaces the token "%PORT%" with the allocated server port to allow backend workers to connect.
+// If no command arguments are provided, it acts as an infinite blocking loop to keep the ncgi process alive.
+// It pipes standard I/O streams directly to the host and waits for the process to complete or the context to be canceled.
 func handleSubprocess(ctx context.Context, args ...string) error {
 	var err error
 	if len(args) == 0 {
@@ -78,10 +86,15 @@ func handleSubprocess(ctx context.Context, args ...string) error {
 	return cmd.Run()
 }
 
+// CGIHandler encapsulates the logic for executing a script as a Common Gateway Interface (CGI) program.
+// It stores the absolute path to the executable script.
 type CGIHandler struct {
 	script string
 }
 
+// NewCGIHandler validates the provided script path and initializes a new CGIHandler.
+// It resolves the absolute path of the script and reports a fatal error if the script cannot be found or resolved,
+// ensuring that the application fails fast during startup if misconfigured.
 func NewCGIHandler(script string) http.Handler {
 	p, err := exec.LookPath(script)
 	if err != nil {
@@ -95,6 +108,10 @@ func NewCGIHandler(script string) http.Handler {
 	return CGIHandler{p}
 }
 
+// ServeHTTP implements the http.Handler interface by executing the underlying CGI script on each incoming HTTP request.
+// It maps standard HTTP concepts (method, URI, headers, query parameters) into POSIX CGI environment variables.
+// It also streams the request body to the script's standard input and streams the script's standard output back to the HTTP client.
+// The function manages the lifecycle of the subprocess, ensuring it is killed if the request context is canceled or when the response finishes.
 func (c CGIHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	cmd := exec.Cmd{}
